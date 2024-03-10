@@ -3,7 +3,7 @@ clear all
 close all
 format default
 
-K = 6;
+K = 4;
 D = 2;
 N = D + 1;
 
