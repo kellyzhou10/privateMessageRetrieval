@@ -3,7 +3,7 @@ clear all
 close all
 format default
 
-K = 5;
+K = 4;
 D = 2;
 N = D;
 
@@ -175,6 +175,22 @@ for i = 1:length(I)
     results_table = [results_table; reshape(table(:,:,I(i)),1,4)];
 end
 disp([results_table,newx]);
+
+% alphEq = [];
+% for i = 1:size(eqs,1)
+%     rowEq = [];
+%     for j = 1:size(eqs,2)
+%         temp = de2bi(eqs(i,j),K);
+%         str = "";
+%         if temp(1) str = str + "a"; end
+%         if temp(2) str = str + "b"; end
+%         if temp(3) str = str + "c"; end
+%         if temp(4) str = str + "d"; end
+%         if temp(5) str = str + "e"; end
+%         rowEq = [rowEq,str];
+%     end
+%     alphEq = [alphEq;rowEq];
+% end
 
 function x = isSingleton(encoding)
     if encoding == 1
