@@ -3,7 +3,8 @@ clear all
 close all
 format default
 
-K = 4;
+prompt = "Enter K:" + newline;
+K = input(prompt);
 D = 2;
 N = D;
 
@@ -29,8 +30,6 @@ end
 interference = bi2de(interference);
 
 table = [];
-global visited;
-visited = zeros(noQueries,noQueries,noQueries,noQueries);
 
 N2helper = cat(3,[1 0;0 1],[1 1;0 1],[1 0;1 1],[1 1;1 1]);
 % server1: q1 = q2 = null
@@ -466,38 +465,19 @@ for i = 2:size(interference,1)
         end
     end
 end
+% table
+table = reshape(table,[4,size(table,3)])';
+table = unique(table,'rows','stable');
 
-% alpha = [];
-% for i = 1:size(table,3)
-%     col = [];
-%     for j = 1:size(table,1)
-%         row = [];
-%         for k = 1:size(table,2)
-%             temp = de2bi(table(j,k,i),K);
-%             str = "";
-%             if temp(1) str = str + "a"; end
-%             if temp(2) str = str + "b"; end
-%             if temp(3) str = str + "c"; end
-%             if temp(4) str = str + "d"; end
-%             if temp(5) str = str + "e"; end
-%             if temp(6) str = str + "f"; end
-%             row = [row,str];
-%         end
-%         col = [col;row];
-%     end
-%     alpha = [alpha;col];
-% end
-
-noRows = size(table,3);
+noRows = size(table,1);
 downloadCnt = zeros(noRows,1);
 coefs = zeros(noQueries,noQueries,noRows); % q1xq2xrow
 for r = 1:noRows
-    for n = 1:N
-        coefs(table(1,n,r)+1,table(2,n,r)+1,r) = coefs(table(1,n,r)+1,table(2,n,r)+1,r) + 1;
-        for q = 1:2
-            if table(q,n,r) ~= 0
-                downloadCnt(r) = downloadCnt(r) + 1;
-            end
+    coefs(table(r,1)+1,table(r,2)+1,r) = coefs(table(r,1)+1,table(r,2)+1,r) + 1;
+    coefs(table(r,3)+1,table(r,4)+1,r) = coefs(table(r,3)+1,table(r,4)+1,r) + 1;
+    for q = 1:4
+        if table(r,q) ~= 0
+            downloadCnt(r) = downloadCnt(r) + 1;
         end
     end
 end
@@ -557,9 +537,29 @@ I = find(x ~= 0);
 newx = x(I);
 results_table = [];
 for i = 1:length(I)
-    results_table = [results_table; reshape(table(:,:,I(i)),1,4)];
+    results_table = [results_table; table(I(i),:)];
 end
-disp([results_table,newx]);
+fprintf('%10s%10s%10s%10s%10s%10s','row','leftt','leftb','rightt','rightb','prob');
+disp(newline);
+disp([I,results_table,newx]);
+
+results_alpha = [];
+for i = 1:size(results_table,1)
+    row = [];
+    for j = 1:size(results_table,2)
+        temp = de2bi(results_table(i,j),K);
+        str = "";
+        if temp(1) str = str + "a"; end
+        if K > 1 && temp(2) str = str + "b"; end
+        if K > 2 && temp(3) str = str + "c"; end
+        if K > 3 && temp(4) str = str + "d"; end
+        if K > 4 && temp(5) str = str + "e"; end
+        if K > 5 && temp(6) str = str + "f"; end
+        row = [row,str];
+    end
+    results_alpha = [results_alpha;row];
+end
+results_alpha = reshape(results_alpha',[2,2,size(results_alpha,1)]);
 
 % alphEq = [];
 % for i = 1:size(eqs,1)
@@ -597,16 +597,14 @@ function share = shareFiles(num1,num2,K)
 end
 
 function table = addRow(row,table,K)
-    global visited;
     for i = 1:2
         if shareFiles(row(1,i),row(2,i),K) && row(1,i) ~= row(2,i)
             return;
         end
     end
     row = [sort(row(:,1)) sort(row(:,2))];
-    if ~visited(row(1,1)+1,row(2,1)+1,row(1,2)+1,row(2,2)+1)
-        table = cat(3,table,row);
-        visited(row(1,1)+1,row(2,1)+1,row(1,2)+1,row(2,2)+1) = 1;
-        visited(row(1,2)+1,row(2,2)+1,row(1,1)+1,row(2,1)+1) = 1;
+    if (row(1,1) > row(1,2))
+        row = [row(:,2) row(:,1)];
     end
+    table = cat(3,table,row);
 end
